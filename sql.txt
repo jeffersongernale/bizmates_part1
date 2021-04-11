@@ -1,0 +1,41 @@
+SELECT 
+    CONCAT('T',LPAD(A.id,11,0)) id, 
+    A.nickname, 
+    CASE 
+        WHEN A.status = 0 THEN 'Discontinued'
+        WHEN A.status = 1 THEN 'Active'
+        WHEN A.status = 2 THEN 'Deactivated'
+    END AS status, 
+    GROUP_CONCAT(
+        DISTINCT 
+            CASE WHEN B.role = 1 THEN 'Trainor'
+                WHEN B.role = 2 THEN 'Assessor'
+                WHEN B.role = 3 THEN 'Staff'
+            END
+        SEPARATOR  '/'
+    ) AS role
+FROM trn_teacher A
+INNER JOIN trn_teacher_role B ON A.id = B.teacher_id
+GROUP BY A.id
+
+
+SELECT A.id, A.nickname, 
+(SELECT COUNT(id) from trn_time_table WHERE status = 1 AND teacher_id = A.id) AS Open,
+(SELECT COUNT(id) from trn_time_table WHERE status = 3 AND teacher_id = A.id) AS Reserve,
+(SELECT COUNT(id) from trn_evaluation WHERE result = 1 AND teacher_id = A.id) AS Taught,
+(SELECT COUNT(id) from trn_evaluation WHERE result = 2 AND teacher_id = A.id) AS NoShow
+FROM trn_teacher A
+
+
+
+SELECT A.id, A.nickname, 
+COUNT(B.teacher_id) AS Open,
+COUNT(C.teacher_id) AS Reserved,
+COUNT(D.teacher_id) AS Taught,
+COUNT(E.teacher_id) AS NoShow
+FROM trn_teacher A
+LEFT JOIN trn_time_table B ON A.id = B.teacher_id AND B.status = 1
+LEFT JOIN trn_time_table C ON A.id = C.teacher_id AND C.status = 3
+LEFT JOIN trn_evaluation D ON A.id = D.teacher_id AND D.result = 1
+LEFT JOIN trn_evaluation E ON A.id = E.teacher_id AND E.result = 2
+GROUP BY A.id   
